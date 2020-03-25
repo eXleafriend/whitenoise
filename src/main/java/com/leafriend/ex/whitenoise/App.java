@@ -11,9 +11,11 @@ public class App {
 		final TimerTask task = new TimerTask() {
 			@Override
 			public void run() {
-				System.out.println("play() @ " + new Date().toString());
-				play();
-			}
+				double[] a = tone(80, 1);
+				try (StdAudio white = new StdAudio()) {
+					white.play(a);
+				}
+					}
 		};
 		timer.scheduleAtFixedRate(task, new Date(), 1000);
 	}
@@ -25,13 +27,6 @@ public class App {
 			a[i] = amplitude * Math.sin(2 * Math.PI * i * hz / StdAudio.SAMPLE_RATE);
 		}
 		return a;
-	}
-
-	public static void play() {
-		double[] a = tone(80, 1);
-		try (StdAudio white = new StdAudio()) {
-			white.play(a);
-		}
 	}
 
 }
