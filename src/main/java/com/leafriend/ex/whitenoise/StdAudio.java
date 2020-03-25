@@ -52,40 +52,30 @@ import javax.sound.sampled.LineEvent;
  * @author Robert Sedgewick
  * @author Kevin Wayne
  */
-public final class StdAudio {
+public final class StdAudio implements AutoCloseable{
 
 	/**
 	 * The sample rate: 44,100 Hz for CD quality audio.
 	 */
 	public static final int SAMPLE_RATE = 44100;
 
-	private static final int BYTES_PER_SAMPLE = 2; // 16-bit audio
-	private static final int BITS_PER_SAMPLE = 16; // 16-bit audio
-	private static final double MAX_16_BIT = 32768;
-	private static final int SAMPLE_BUFFER_SIZE = 4096;
+	public static final int BYTES_PER_SAMPLE = 2; // 16-bit audio
+	public static final int BITS_PER_SAMPLE = 16; // 16-bit audio
+	public static final double MAX_16_BIT = 32768;
+	public static final int SAMPLE_BUFFER_SIZE = 4096;
 
-	private static final int MONO = 1;
-	private static final int STEREO = 2;
-	private static final boolean LITTLE_ENDIAN = false;
-	private static final boolean BIG_ENDIAN = true;
-	private static final boolean SIGNED = true;
-	private static final boolean UNSIGNED = false;
+	public static final int MONO = 1;
+	public static final int STEREO = 2;
+	public static final boolean LITTLE_ENDIAN = false;
+	public static final boolean BIG_ENDIAN = true;
+	public static final boolean SIGNED = true;
+	public static final boolean UNSIGNED = false;
 
-	private static SourceDataLine line; // to play the sound
-	private static byte[] buffer; // our internal buffer
-	private static int bufferSize = 0; // number of samples currently in internal buffer
+	private SourceDataLine line; // to play the sound
+	private byte[] buffer; // our internal buffer
+	private int bufferSize = 0; // number of samples currently in internal buffer
 
-	private StdAudio() {
-		// can not instantiate
-	}
-
-	// static initializer
-	static {
-		init();
-	}
-
-	// open up an audio stream
-	private static void init() {
+	public StdAudio() {
 		try {
 			// 44,100 Hz, 16-bit audio, mono, signed PCM, little endian
 			AudioFormat format = new AudioFormat((float) SAMPLE_RATE, BITS_PER_SAMPLE, MONO, SIGNED, LITTLE_ENDIAN);
@@ -109,7 +99,7 @@ public final class StdAudio {
 	}
 
 	// get an AudioInputStream object from a file
-	private static AudioInputStream getAudioInputStreamFromFile(String filename) {
+	private AudioInputStream getAudioInputStreamFromFile(String filename) {
 		if (filename == null) {
 			throw new IllegalArgumentException("filename is null");
 		}
@@ -147,7 +137,7 @@ public final class StdAudio {
 	/**
 	 * Closes standard audio.
 	 */
-	public static void close() {
+	public void close() {
 		line.drain();
 		line.stop();
 	}
@@ -159,7 +149,7 @@ public final class StdAudio {
 	 * @param sample the sample to play
 	 * @throws IllegalArgumentException if the sample is {@code Double.NaN}
 	 */
-	public static void play(double sample) {
+	public void play(double sample) {
 		if (Double.isNaN(sample))
 			throw new IllegalArgumentException("sample is NaN");
 
@@ -191,7 +181,7 @@ public final class StdAudio {
 	 * @throws IllegalArgumentException if any sample is {@code Double.NaN}
 	 * @throws IllegalArgumentException if {@code samples} is {@code null}
 	 */
-	public static void play(double[] samples) {
+	public void play(double[] samples) {
 		if (samples == null)
 			throw new IllegalArgumentException("argument to play() is null");
 		for (int i = 0; i < samples.length; i++) {
@@ -207,7 +197,7 @@ public final class StdAudio {
 	 * @param filename the name of the audio file
 	 * @return the array of samples
 	 */
-	public static double[] read(String filename) {
+	public double[] read(String filename) {
 
 		// make sure that AudioFormat is 16-bit, 44,100 Hz, little endian
 		final AudioInputStream ais = getAudioInputStreamFromFile(filename);
@@ -285,7 +275,7 @@ public final class StdAudio {
 	 * @throws IllegalArgumentException if {@code filename} extension is not
 	 *                                  {@code .wav} or {@code .au}
 	 */
-	public static void save(String filename, double[] samples) {
+	public void save(String filename, double[] samples) {
 		if (filename == null) {
 			throw new IllegalArgumentException("filenameis null");
 		}
@@ -328,7 +318,7 @@ public final class StdAudio {
 	 * @throws IllegalArgumentException if unable to play {@code filename}
 	 * @throws IllegalArgumentException if {@code filename} is {@code null}
 	 */
-	public static synchronized void play(final String filename) {
+	public synchronized void play(final String filename) {
 		new Thread(new Runnable() {
 			public void run() {
 				AudioInputStream ais = getAudioInputStreamFromFile(filename);
@@ -342,7 +332,7 @@ public final class StdAudio {
 	// javax.sound.sampled.Clip fails for long clips (on some systems), perhaps
 	// because
 	// JVM closes (see remedy in loop)
-	private static void stream(AudioInputStream ais) {
+	private void stream(AudioInputStream ais) {
 		SourceDataLine line = null;
 		int BUFFER_SIZE = 4096; // 4K buffer
 
@@ -375,7 +365,7 @@ public final class StdAudio {
 	 * @param filename the name of the audio file
 	 * @throws IllegalArgumentException if {@code filename} is {@code null}
 	 */
-	public static synchronized void loop(String filename) {
+	public synchronized void loop(String filename) {
 		if (filename == null)
 			throw new IllegalArgumentException();
 
@@ -412,7 +402,7 @@ public final class StdAudio {
 
 	// create a note (sine wave) of the given frequency (Hz), for the given
 	// duration (seconds) scaled to the given volume (amplitude)
-	private static double[] note(double hz, double duration, double amplitude) {
+	public static double[] note(double hz, double duration, double amplitude) {
 		int n = (int) (StdAudio.SAMPLE_RATE * duration);
 		double[] a = new double[n + 1];
 		for (int i = 0; i <= n; i++)
@@ -434,19 +424,22 @@ public final class StdAudio {
 
 		// 440 Hz for 1 sec
 		double freq = 440.0;
+
+		StdAudio stdAudio = new StdAudio();
+
 		for (int i = 0; i <= StdAudio.SAMPLE_RATE; i++) {
-			StdAudio.play(0.5 * Math.sin(2 * Math.PI * freq * i / StdAudio.SAMPLE_RATE));
+			stdAudio.play(0.5 * Math.sin(2 * Math.PI * freq * i / StdAudio.SAMPLE_RATE));
 		}
 
 		// scale increments
 		int[] steps = { 0, 2, 4, 5, 7, 9, 11, 12 };
 		for (int i = 0; i < steps.length; i++) {
 			double hz = 440.0 * Math.pow(2, steps[i] / 12.0);
-			StdAudio.play(note(hz, 1.0, 0.5));
+			stdAudio.play(note(hz, 1.0, 0.5));
 		}
 
 		// need to call this in non-interactive stuff so the program doesn't terminate
 		// until all the sound leaves the speaker.
-		StdAudio.close();
+		stdAudio.close();
 	}
 }
