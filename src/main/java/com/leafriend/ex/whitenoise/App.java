@@ -15,7 +15,7 @@ public class App {
 				play();
 			}
 		};
-		timer.scheduleAtFixedRate(task, new Date(), 200);
+		timer.scheduleAtFixedRate(task, new Date(), 1000);
 	}
 
 	public static double[] tone(double hz, double amplitude) {
@@ -28,8 +28,10 @@ public class App {
 	}
 
 	public static void play() {
-		double[] a = tone(80, 10);
-		StdAudio.play(a);
+		double[] a = tone(80, 1);
+		try (StdAudio white = new StdAudio()) {
+			white.play(a);
+		}
 	}
 
 }
