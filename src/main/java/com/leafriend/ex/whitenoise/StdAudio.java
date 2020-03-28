@@ -140,6 +140,7 @@ public final class StdAudio implements AutoCloseable {
 	public void close() {
 		line.drain();
 		line.stop();
+		line.close();
 	}
 
 	/**
