@@ -15,7 +15,7 @@ public class App {
 				try (StdAudio white = new StdAudio()) {
 					white.play(a);
 				}
-					}
+			}
 		};
 		timer.scheduleAtFixedRate(task, new Date(), 1000);
 	}

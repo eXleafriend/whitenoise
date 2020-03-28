@@ -52,7 +52,7 @@ import javax.sound.sampled.LineEvent;
  * @author Robert Sedgewick
  * @author Kevin Wayne
  */
-public final class StdAudio implements AutoCloseable{
+public final class StdAudio implements AutoCloseable {
 
 	/**
 	 * The sample rate: 44,100 Hz for CD quality audio.
