@@ -31,58 +31,70 @@ public class App { // extends TimerTask {
 	public static final boolean SIGNED = true;
 	public static final boolean UNSIGNED = false;
 
-	public static void main(String[] args) throws LineUnavailableException {
+	public static void main(String[] args) {
 
 		final double hz = 261.6 / 4;
-		final double amplitude = 0.01;
+		final double amplitude = 5.01;
 		final long period = 1000; // in millisecond
 
 		final AudioFormat format = new AudioFormat((float) SAMPLE_RATE, BITS_PER_SAMPLE, MONO, SIGNED, LITTLE_ENDIAN);
 		final DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-		final SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
-		line.open(format, BUFFER_SIZE);
-		line.start();
 
 		final Timer timer = new Timer();
 		final TimerTask task = new TimerTask() {
 
 			private int cursor = 0;
-			private final byte[] buffer = new byte[line.available()];
+			private final byte[] buffer = new byte[BUFFER_SIZE];
 
 			@Override
 			public void run() {
 
-				for (int i = 0; i <= 1 + SAMPLE_RATE * period / 1000; i++) {
-					double sample = amplitude * Math.sin(2 * Math.PI * i * hz / SAMPLE_RATE);
+				try {
 
-					// clip if outside [-1, +1]
-					if (sample < -1.0)
-						sample = -1.0;
-					if (sample > +1.0)
-						sample = +1.0;
+					SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
+					line.open(format, BUFFER_SIZE);
+					line.start();
 
-					// convert to bytes
-					short s = (short) (MAX_16_BIT * sample);
-					if (sample == 1.0)
-						s = Short.MAX_VALUE; // special case since 32768 not a short
-					buffer[cursor++] = (byte) s;
-					buffer[cursor++] = (byte) (s >> 8); // little endian
+					for (int i = 0; i <= 1 + SAMPLE_RATE * period / 1000; i++) {
+						double sample = amplitude * Math.sin(2 * Math.PI * i * hz / SAMPLE_RATE);
 
-					// send to sound card if buffer is full
-					if (cursor >= buffer.length) {
-						line.write(buffer, 0, buffer.length);
-						cursor = 0;
+						// clip if outside [-1, +1]
+						if (sample < -1.0)
+							sample = -1.0;
+						if (sample > +1.0)
+							sample = +1.0;
+
+						// convert to bytes
+						short s = (short) (MAX_16_BIT * sample);
+						if (sample == 1.0)
+							s = Short.MAX_VALUE; // special case since 32768 not a short
+						buffer[cursor++] = (byte) s;
+						buffer[cursor++] = (byte) (s >> 8); // little endian
+
+						// send to sound card if buffer is full
+						if (cursor >= buffer.length) {
+							line.write(buffer, 0, buffer.length);
+							cursor = 0;
+						}
 					}
-				}
 
+					if (cursor > 0) {
+						line.write(buffer, 0, cursor);
+					}
+
+					line.drain();
+					line.stop();
+					line.close();
+
+					line = null;
+
+				} catch (LineUnavailableException e) {
+					e.printStackTrace();
+				}
 			}
 
 		};
 		timer.scheduleAtFixedRate(task, new Date(), period);
-
-		// line.drain();
-		// line.stop();
-		// line.close();
 
 	}
 
