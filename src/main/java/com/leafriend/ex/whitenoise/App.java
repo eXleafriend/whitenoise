@@ -37,9 +37,6 @@ public class App { // extends TimerTask {
 		final double amplitude = 5.01;
 		final long period = 1000; // in millisecond
 
-		final AudioFormat format = new AudioFormat((float) SAMPLE_RATE, BITS_PER_SAMPLE, MONO, SIGNED, LITTLE_ENDIAN);
-		final DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-
 		final Timer timer = new Timer();
 		final TimerTask task = new TimerTask() {
 
@@ -51,6 +48,9 @@ public class App { // extends TimerTask {
 
 				try {
 
+					AudioFormat format = new AudioFormat((float) SAMPLE_RATE, BITS_PER_SAMPLE, MONO, SIGNED,
+							LITTLE_ENDIAN);
+					DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
 					SourceDataLine line = (SourceDataLine) AudioSystem.getLine(info);
 					line.open(format, BUFFER_SIZE);
 					line.start();
@@ -87,6 +87,8 @@ public class App { // extends TimerTask {
 					line.close();
 
 					line = null;
+					info = null;
+					format = null;
 
 				} catch (LineUnavailableException e) {
 					e.printStackTrace();
